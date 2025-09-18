@@ -7,6 +7,7 @@ const archiver = require("archiver");
 
 const app = express();
 const PORT = 3001;
+const YOUR_NETWORK_IP = "172.100.120.74";
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -26,6 +27,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// ... (todo o seu código do app.get('/download') permanece igual)
 app.get("/download", async (req, res) => {
   const { url } = req.query;
 
@@ -82,14 +84,12 @@ app.get("/download", async (req, res) => {
       ytDlpProcess.stdout.on("data", (data) => console.log(data.toString()));
       ytDlpProcess.stderr.on("data", (data) => console.error(data.toString()));
 
-      // Quando o processo terminar, zipe os arquivos e os apague
       ytDlpProcess.on("close", (code) => {
         if (code === 0) {
           console.log("Download da playlist concluído. Zipando arquivos...");
           archive.directory(tempDir, false);
           archive.finalize();
 
-          // Limpa a pasta temporária após o zip ser enviado
           archive.on("end", () => {
             fs.rm(tempDir, { recursive: true, force: true }, (err) => {
               if (err) console.error("Erro ao remover pasta temporária:", err);
@@ -100,13 +100,10 @@ app.get("/download", async (req, res) => {
           res
             .status(500)
             .send("Erro ao baixar a playlist. Verifique o console do backend.");
-          // Limpa a pasta temp mesmo em caso de erro
           fs.rm(tempDir, { recursive: true, force: true }, () => {});
         }
       });
     } else {
-      // --- Lógica para Vídeo Único ---
-      // Primeiro, pegamos o título para o nome do arquivo
       const titleProcess = spawn("yt-dlp", [
         "--get-title",
         "-o",
@@ -128,7 +125,6 @@ app.get("/download", async (req, res) => {
       );
       res.setHeader("Content-Type", "audio/mpeg");
 
-      // Comando para baixar, converter e enviar o stream diretamente
       const ytDlpProcess = spawn("yt-dlp", [
         url,
         "-x",
@@ -137,10 +133,9 @@ app.get("/download", async (req, res) => {
         "--audio-quality",
         "0",
         "-o",
-        "-", // Enviar o resultado para a saída padrão (stdout)
+        "-",
       ]);
 
-      // Pipe do stdout do processo diretamente para a resposta do Express
       ytDlpProcess.stdout.pipe(res);
 
       ytDlpProcess.stderr.on("data", (data) =>
@@ -156,8 +151,7 @@ app.get("/download", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(
-    `Backend rodando na porta ${PORT} com a versão robusta (yt-dlp).`
-  );
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Backend rodando em http://${YOUR_NETWORK_IP}:${PORT}`);
+  console.log(`Aberto para conexões na rede local na porta ${PORT}.`);
 });
