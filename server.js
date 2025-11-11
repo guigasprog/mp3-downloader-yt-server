@@ -6,11 +6,10 @@ const fs = require("fs");
 const archiver = require("archiver");
 
 const app = express();
-const PORT = 3001;
-const YOUR_NETWORK_IP = "172.100.120.74";
+const PORT = 3000;
 
 const allowedOrigins = [
-  "http://localhost:3000",
+  "https://mp3-downloader-yt.vercel.app",
   "https://mp3-downloader-yt-client.vercel.app",
 ];
 
@@ -152,6 +151,5 @@ app.get("/download", async (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Backend rodando em http://${YOUR_NETWORK_IP}:${PORT}`);
   console.log(`Aberto para conexões na rede local na porta ${PORT}.`);
 });
